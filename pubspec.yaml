@@ -30,15 +30,28 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  cupertino_icons: ^1.0.2
+
+  # For OpenStreetMap maps
+  flutter_map: ^4.0.0
+  latlong2: ^0.8.1
+  google_maps_flutter: ^2.2.5
+
+  # For geocoding (forward/reverse)
+  geocoding: ^2.0.5
+
+  # For HTTP requests to your backend
+  http: ^0.13.5
+
+  # For picking images from device
   image_picker: ^0.8.7+4
+
+  # For dotted borders around widgets
   dotted_border: ^2.0.0
-  google_maps_flutter: ^2.3.0
-  intl: any
-  file_picker: any
-  record: any
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
+
+  # Optionally: For secure storage (if you use it)
+  flutter_secure_storage: ^9.0.2
 
 dev_dependencies:
   flutter_test:

@@ -1,10 +1,14 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:latlong2/latlong.dart';
 import 'findthematch.dart';  // Import FindTheMatchPage
 import 'editprofile.dart';
-import 'message.dart';  // Import EditProfilePage
+import 'message.dart';  // Import MessagePage
+import 'openstreetmap_search_page.dart'; // Import your new OpenStreetMap search screen
 
 class DashboardPage extends StatefulWidget {
   final String? userName;
@@ -18,6 +22,9 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   String? uploadedImagePath;
+
+  // Sample users list; replace with backend data as needed
+  List<Map<String, dynamic>> users = [];
 
   @override
   void initState() {
@@ -44,6 +51,30 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  // Open OpenStreetMap search page
+  void _openMapSearch() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => OpenStreetMapSearchPage()),
+    );
+  }
+
+  // Fetch nearby users from backend
+  Future<List<Map<String, dynamic>>> fetchUsersForArea(LatLng areaLatLng) async {
+    final url = Uri.parse(
+        'http://10.0.2.2:3000/users-nearby?lat=${areaLatLng.latitude}&lon=${areaLatLng.longitude}');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final List data = jsonDecode(response.body);
+        return List<Map<String, dynamic>>.from(data);
+      }
+    } catch (e) {
+      print('Fetch users error: $e');
+    }
+    return [];
+  }
+
   @override
   Widget build(BuildContext context) {
     final pink = const Color(0xFFF45B62);
@@ -51,8 +82,8 @@ class _DashboardPageState extends State<DashboardPage> {
     final topRightIcons = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(right: 10),
+        GestureDetector(
+          onTap: _openEditProfile,  // "+" button opens Edit Profile now
           child: Container(
             width: 44,
             height: 44,
@@ -67,6 +98,7 @@ class _DashboardPageState extends State<DashboardPage> {
             child: const Icon(Icons.add, size: 26, color: Colors.white),
           ),
         ),
+        const SizedBox(width: 12),
         GestureDetector(
           onTap: _openEditProfile,
           child: Container(
@@ -106,7 +138,8 @@ class _DashboardPageState extends State<DashboardPage> {
           child: CircleAvatar(
             radius: 87,
             backgroundColor: Colors.white,
-            backgroundImage: (uploadedImagePath != null) ? FileImage(File(uploadedImagePath!)) : null,
+            backgroundImage:
+                (uploadedImagePath != null) ? FileImage(File(uploadedImagePath!)) : null,
             child: (uploadedImagePath == null)
                 ? Icon(Icons.person, size: 70, color: Colors.grey[400])
                 : null,
@@ -227,7 +260,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (_) => const FindTheMatchPage()),
+                              MaterialPageRoute(builder: (_) => OpenStreetMapSearchPage()),
                             );
                           },
                           child: const Text(
@@ -251,7 +284,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             elevation: 5,
                             padding: const EdgeInsets.symmetric(vertical: 19),
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            // You can define behavior for Explore button here if desired
+                          },
                           child: const Text(
                             'Explore',
                             style: TextStyle(
@@ -294,7 +329,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 const Icon(Icons.home, size: 26, color: Colors.white),
                 const Icon(Icons.explore, size: 26, color: Colors.white),
                 const Icon(Icons.search, size: 30, color: Colors.white),
-
                 IconButton(
                   icon: const Icon(Icons.chat_bubble_outline, size: 26, color: Colors.white),
                   onPressed: () {
@@ -307,7 +341,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 const Icon(Icons.person, size: 26, color: Colors.white),
               ],
             ),
-            // Horizontal selection indicator under search icon
             Positioned(
               bottom: 10,
               left: 0,
