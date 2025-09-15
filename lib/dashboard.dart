@@ -9,6 +9,7 @@ import 'findthematch.dart';
 import 'editprofile.dart';
 import 'message.dart';
 import 'openstreetmap_search_page.dart';
+import 'explore.dart'; // <-- Add this import
 
 class DashboardPage extends StatefulWidget {
   final String? userName;
@@ -120,16 +121,16 @@ class _DashboardPageState extends State<DashboardPage> {
               Text('No notes added yet.', style: TextStyle(color: Colors.black45)),
             if (userNotes.isNotEmpty)
               ...userNotes.map((note) => Padding(
-                    padding: EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.note, color: Color(0xFFF45B62), size: 21),
-                        SizedBox(width: 8),
-                        Expanded(child: Text(note, style: TextStyle(fontSize: 16))),
-                      ],
-                    ),
-                  )),
+                padding: EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.note, color: Color(0xFFF45B62), size: 21),
+                    SizedBox(width: 8),
+                    Expanded(child: Text(note, style: TextStyle(fontSize: 16))),
+                  ],
+                ),
+              )),
             SizedBox(height: 12),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -155,7 +156,7 @@ class _DashboardPageState extends State<DashboardPage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         GestureDetector(
-          onTap: _showNoteList, // "+" button at top right opens note list
+          onTap: _showNoteList,
           child: Container(
             width: 44,
             height: 44,
@@ -211,7 +212,7 @@ class _DashboardPageState extends State<DashboardPage> {
             radius: 87,
             backgroundColor: Colors.white,
             backgroundImage:
-                (uploadedImagePath != null) ? FileImage(File(uploadedImagePath!)) : null,
+            (uploadedImagePath != null) ? FileImage(File(uploadedImagePath!)) : null,
             child: (uploadedImagePath == null)
                 ? Icon(Icons.person, size: 70, color: Colors.grey[400])
                 : null,
@@ -403,7 +404,12 @@ class _DashboardPageState extends State<DashboardPage> {
                             elevation: 5,
                             padding: const EdgeInsets.symmetric(vertical: 19),
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const ExplorePage()),
+                            );
+                          },
                           child: const Text(
                             'Explore',
                             style: TextStyle(
@@ -483,4 +489,3 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 }
-
