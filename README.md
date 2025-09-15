@@ -104,10 +104,7 @@ Start the backend server:
 ```
 npm start
 ```
-Meanwhile, in a separate terminal, run your Flutter app:
-```
-flutter run
-```
+
 
 4. Update frontend API endpoint URLs to point to your backend server in Flutter project config files.
 
