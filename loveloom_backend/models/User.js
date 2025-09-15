@@ -10,8 +10,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true,
     unique: true,
-    sparse: true, // allows multiple docs without username
-    // Add index to speed unique checks
+    sparse: true,
     index: true,
   },
   email: {
@@ -23,7 +22,7 @@ const userSchema = new mongoose.Schema({
   },
   gender: {
     type: String,
-    enum: ['male', 'female', 'other'], // values must match frontend input (lowercase)
+    enum: ['male', 'female', 'other'],
     default: 'other',
     required: [true, 'Gender is required'],
   },

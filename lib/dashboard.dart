@@ -79,7 +79,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _openNoteDialog() async {
     final newNote = await showDialog<String>(
       context: context,
-      builder: (ctx) => const NoteDialogPage(),
+      builder: (ctx) => NoteDialogPage(placeId: '1' ),
     );
 
     if (newNote != null && newNote.trim().isNotEmpty) {

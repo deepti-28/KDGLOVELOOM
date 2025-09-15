@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'services/api_service.dart'; // Update with your actual relative or package path
+import 'note_dialog.dart'; // Update accordingly
 
-class CafesPage extends StatelessWidget {
+class CafesPage extends StatefulWidget {
+  final String placeId;
   final String imageUrl;
   final String cafeName;
   final String address;
@@ -12,6 +15,7 @@ class CafesPage extends StatelessWidget {
 
   const CafesPage({
     Key? key,
+    required this.placeId,
     required this.imageUrl,
     required this.cafeName,
     required this.address,
@@ -23,274 +27,413 @@ class CafesPage extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _CafesPageState createState() => _CafesPageState();
+}
+
+class _CafesPageState extends State<CafesPage> {
+  final ApiService _apiService = ApiService();
+
+  int likesCount = 0;
+  bool isLikedByUser = false;
+  List<dynamic> notes = [];
+  bool isLoadingNotes = false;
+  bool isLoadingLikes = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchPlaceDetails();
+    _fetchNotes();
+  }
+
+  Future<void> _fetchPlaceDetails() async {
+    setState(() => isLoadingLikes = true);
+    try {
+      final placeData = await _apiService.getPlaceDetails(widget.placeId);
+      setState(() {
+        likesCount = (placeData['likes'] as List<dynamic>).length;
+        // TODO: Detect if current user liked the place
+        isLikedByUser = false;
+      });
+    } catch (_) {
+      // Handle error or show message
+    } finally {
+      setState(() => isLoadingLikes = false);
+    }
+  }
+
+  Future<void> _fetchNotes() async {
+    setState(() => isLoadingNotes = true);
+    try {
+      final fetchedNotes = await _apiService.getPlaceNotes(widget.placeId);
+      setState(() {
+        notes = fetchedNotes;
+      });
+    } catch (_) {
+      // Handle error or show message
+    } finally {
+      setState(() => isLoadingNotes = false);
+    }
+  }
+
+  Future<void> _toggleLike() async {
+    setState(() => isLoadingLikes = true);
+    bool success = await _apiService.toggleLikePlace(widget.placeId);
+    if (success) {
+      setState(() {
+        if (isLikedByUser) {
+          likesCount = (likesCount > 0) ? likesCount - 1 : 0;
+          isLikedByUser = false;
+        } else {
+          likesCount += 1;
+          isLikedByUser = true;
+        }
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update like.')));
+    }
+    setState(() => isLoadingLikes = false);
+  }
+
+  Future<void> _openAddNote() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (_) => NoteDialogPage(placeId: widget.placeId)),
+    );
+    if (result == true) {
+      _fetchNotes();
+    }
+  }
+
+  void _showNotesDialog() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        if (isLoadingNotes) {
+          return const SizedBox(
+            height: 200,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (notes.isEmpty) {
+          return SizedBox(
+            height: 200,
+            child: Center(child: Text("No notes yet. Be the first to add one!")),
+          );
+        }
+        return SizedBox(
+          height: 400,
+          child: ListView.builder(
+            itemCount: notes.length,
+            itemBuilder: (context, index) {
+              final note = notes[index];
+              final user = note['user'] ?? {};
+              final userName = user['name'] ?? 'Anonymous';
+              final noteText = note['text'] ?? '';
+              final createdAt = note['createdAt'] ?? '';
+
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundImage: user['profileImagePath'] != null
+                      ? NetworkImage(user['profileImagePath'])
+                      : null,
+                  child: user['profileImagePath'] == null
+                      ? const Icon(Icons.person)
+                      : null,
+                ),
+                title: Text(userName),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(noteText),
+                    const SizedBox(height: 4),
+                    Text(
+                      createdAt.split('T').first,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    )
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNoteItem(dynamic note) {
+    final user = note['user'] ?? {};
+    final userName = user['name'] ?? 'Anonymous';
+    final noteText = note['text'] ?? '';
+    final createdAt = note['createdAt'] ?? '';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 16,
+            backgroundImage: (user['profileImagePath'] != null)
+                ? NetworkImage(user['profileImagePath'])
+                : null,
+            child: user['profileImagePath'] == null
+                ? const Icon(Icons.person)
+                : null,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(userName,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    noteText,
+                    style: const TextStyle(fontSize: 15),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  createdAt.split('T').first,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final Color pink = const Color(0xFFF43045);
+    const pink = Color(0xFFF45B62);
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back, color: pink, size: 26),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  Row(
-                    children: [
-                      Icon(Icons.add, color: pink),
-                      SizedBox(width: 7),
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundImage: NetworkImage(
-                          "https://randomuser.me/api/portraits/women/44.jpg",
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            // Cafe main card
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 10, 18, 0),
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(17),
-                    child: Image.network(
-                      imageUrl,
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(17),
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.center,
-                        colors: [
-                          pink.withOpacity(0.65),
-                          Colors.transparent,
+      body: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          // Header
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 18.0, vertical: 10.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: pink, size: 26),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: _toggleLike,
+                      child: Row(
+                        children: [
+                          Icon(
+                            isLikedByUser
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: isLikedByUser ? pink : Colors.grey[400],
+                            size: 26,
+                          ),
+                          const SizedBox(width: 5),
+                          if (isLoadingLikes)
+                            const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: pink,
+                                ))
+                          else
+                            Text(
+                              likesCount.toString(),
+                              style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold),
+                            )
                         ],
                       ),
                     ),
-                  ),
-                  // "NEW" tag
-                  Positioned(
-                    left: 15,
-                    top: 15,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: pink,
-                        borderRadius: BorderRadius.circular(9),
+                    const SizedBox(width: 20),
+                    GestureDetector(
+                      onTap: () => _fetchNotes().then((_) => _showNotesDialog()),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.mode_comment_outlined,
+                              color: Colors.grey, size: 26),
+                          const SizedBox(width: 5),
+                          Text(notes.length.toString(),
+                              style: const TextStyle(color: Colors.black)),
+                        ],
                       ),
-                      child: Text(
-                        'NEW',
-                        style: TextStyle(
+                    ),
+                    const SizedBox(width: 20),
+                    GestureDetector(
+                      onTap: _openAddNote,
+                      child: const Icon(Icons.edit_note,
+                          color: Colors.grey, size: 26),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                )
+              ],
+            ),
+          ),
+
+          // Main card (image, titles, etc.)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(17),
+                  child: Image.network(
+                    widget.imageUrl,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(17),
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.center,
+                      colors: [
+                        pink.withOpacity(0.65),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 15,
+                  top: 15,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: pink,
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: const Text(
+                      'NEW',
+                      style: TextStyle(
                           color: Colors.white,
                           fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                          fontWeight: FontWeight.bold),
                     ),
                   ),
-                  // Distance
-                  Positioned(
-                    right: 15,
-                    top: 15,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.87),
-                        borderRadius: BorderRadius.circular(11),
-                      ),
-                      child: Text(
-                        distance,
-                        style: TextStyle(
+                ),
+                Positioned(
+                  right: 15,
+                  top: 15,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.87),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Text(
+                      widget.distance,
+                      style: const TextStyle(
                           color: pink,
                           fontWeight: FontWeight.w600,
-                          fontSize: 13.5,
-                        ),
-                      ),
+                          fontSize: 13.5),
                     ),
                   ),
-                  // Cafe title
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 64,
-                    child: Center(
-                      child: Text(
-                        cafeName,
-                        style: TextStyle(
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 64,
+                  child: Center(
+                    child: Text(
+                      widget.cafeName,
+                      style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 22,
-                          letterSpacing: 0.1,
-                        ),
-                      ),
+                          letterSpacing: 0.1),
                     ),
                   ),
-                  // Cafe address
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 41,
-                    child: Center(
-                      child: Text(
-                        address.toUpperCase(),
-                        style: TextStyle(
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 41,
+                  child: Center(
+                    child: Text(
+                      widget.address.toUpperCase(),
+                      style: TextStyle(
                           color: Colors.white.withOpacity(0.93),
                           fontSize: 13.3,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                          fontWeight: FontWeight.w500),
                     ),
                   ),
-                  // Social icons row
-                  Positioned(
-                    left: 18,
-                    right: 18,
-                    bottom: 12,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.favorite_border, color: Colors.white, size: 22),
-                            const SizedBox(width: 2),
-                            Text("318", style: TextStyle(color: Colors.white, fontSize: 14)),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Icon(Icons.mode_comment_outlined, color: Colors.white, size: 22),
-                            const SizedBox(width: 2),
-                            Text("321", style: TextStyle(color: Colors.white, fontSize: 14)),
-                          ],
-                        ),
-                        Icon(Icons.event_note, color: Colors.white, size: 21),
-                        Icon(Icons.create_outlined, color: Colors.white, size: 21),
-                        Icon(Icons.edit_note, color: Colors.white, size: 21),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            // What people say
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 22),
-              child: Text(
-                'What people say about the place',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15.5,
-                  color: Colors.black,
-                  fontFamily: 'Nunito',
                 ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Comments section
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              'What people say about the place',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.black,
+                fontFamily: 'Nunito',
               ),
             ),
-            const SizedBox(height: 12),
-            // Review card
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundImage:
-                    NetworkImage("https://randomuser.me/api/portraits/women/44.jpg"),
-                  ),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "$cafeName, ${address.split(',').last}",
-                          style: TextStyle(
-                            color: pink,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12.6,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                          decoration: BoxDecoration(
-                            color: pink,
-                            borderRadius: BorderRadius.circular(17),
-                          ),
-                          child: Text(
-                            reviewText,
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14.7,
-                                fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Text(
-                              "$reviewDate",
-                              style: TextStyle(
-                                color: Colors.black54,
-                                fontSize: 12.2,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            TextButton(
-                              onPressed: () {},
-                              child: Text("Reply",
-                                  style: TextStyle(
-                                      color: pink,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13.3)),
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size(35, 24),
-                              ),
-                            ),
-                            const SizedBox(width: 7),
-                            TextButton(
-                              onPressed: () {},
-                              child: Text("React",
-                                  style: TextStyle(
-                                      color: pink,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13.3)),
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size(35, 24),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+          ),
+          const SizedBox(height: 8),
+
+          isLoadingNotes
+              ? const Center(child: CircularProgressIndicator())
+              : notes.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text(
+                        "No comments yet. Be the first to add a note!",
+                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : ListView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: notes.length,
+                      itemBuilder: (context, index) =>
+                          _buildNoteItem(notes[index]),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-          ],
-        ),
+
+          const SizedBox(height: 24),
+        ],
       ),
+
       bottomNavigationBar: Container(
         height: 62,
         decoration: BoxDecoration(
@@ -304,31 +447,37 @@ class CafesPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             IconButton(
-              icon: const Icon(Icons.home, color: Colors.white, size: 26),
+              icon: const Icon(Icons.home,
+                  color: Colors.white, size: 26),
               onPressed: () {
-                Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+                Navigator.pushNamedAndRemoveUntil(
+                    context, '/dashboard', (route) => false);
               },
             ),
             IconButton(
-              icon: const Icon(Icons.explore, color: Colors.white, size: 26),
+              icon: const Icon(Icons.explore,
+                  color: Colors.white, size: 26),
               onPressed: () {
-                Navigator.pushNamed(context, '/openstreetmap_search_page');
+                Navigator.pushNamed(context, '/openstreetmap_page');
               },
             ),
             IconButton(
-              icon: const Icon(Icons.search, color: Colors.white, size: 30),
+              icon: const Icon(Icons.search,
+                  color: Colors.white, size: 30),
               onPressed: () {
                 Navigator.pushNamed(context, '/explore');
               },
             ),
             IconButton(
-              icon: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 26),
+              icon: const Icon(Icons.chat_bubble_outline,
+                  color: Colors.white, size: 26),
               onPressed: () {
                 Navigator.pushNamed(context, '/message');
               },
             ),
             IconButton(
-              icon: const Icon(Icons.person, color: Colors.white, size: 26),
+              icon: const Icon(Icons.person,
+                  color: Colors.white, size: 26),
               onPressed: () {
                 Navigator.pushNamed(context, '/userprofile');
               },

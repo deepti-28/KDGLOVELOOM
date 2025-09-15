@@ -6,12 +6,12 @@ import 'editprofile.dart';
 import 'findthematch.dart';
 import 'message.dart';
 import 'chat.dart';
-import 'splash_page.dart';
-import 'note.dart'; // Correct import for NotePage widget
+import 'note_dialog.dart'; // Adjusted name to match NoteDialogPage file
 import 'openstreetmap_search_page.dart';
 import 'explore.dart';
 import 'userprofile.dart';
 import 'userdata.dart';
+import 'splash_page.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -37,7 +37,8 @@ class MyApp extends StatelessWidget {
         '/register': (context) => const RegisterPage(),
         '/login': (context) => const LoginPage(),
         '/dashboard': (context) => const DashboardPage(),
-        '/note': (context) => NotePage(), // Correct use of NotePage widget, no const
+        '/note_dialogue': (context) => const NoteDialogPage(placeId: ''), // Temporary default placeId
+        '/note': (context) => const NoteDialogPage(placeId: ''), // For backward compatibility if needed
         '/findthematch': (context) => const FindTheMatchPage(),
         '/message': (context) => const MessagePage(),
         '/chat': (context) => ChatPage(contactUsername: '', contactAvatarUrl: ''),
@@ -81,6 +82,13 @@ class MyApp extends StatelessWidget {
               aboutMe: args['aboutMe'] ?? '',
               galleryImages: (args['galleryImages'] as List<dynamic>?)?.cast<String>() ?? const [],
             ),
+          );
+        }
+        if (settings.name == '/note_dialogue') {
+          final args = settings.arguments as Map<String, dynamic>? ?? {};
+          final placeId = args['placeId'] as String? ?? '';
+          return MaterialPageRoute(
+            builder: (context) => NoteDialogPage(placeId: placeId),
           );
         }
         return null;

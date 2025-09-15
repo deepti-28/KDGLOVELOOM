@@ -16,6 +16,7 @@ class _ExplorePageState extends State<ExplorePage> {
   Widget build(BuildContext context) {
     List<Map<String, String>> places = [
       {
+        "id": "1",
         "image":
         "https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80",
         "title": "IQM Cafe",
@@ -28,6 +29,7 @@ class _ExplorePageState extends State<ExplorePage> {
         "reviewerLocation": "Pune",
       },
       {
+        "id": "2",
         "image":
         "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80",
         "title": "WW Park",
@@ -40,6 +42,7 @@ class _ExplorePageState extends State<ExplorePage> {
         "reviewerLocation": "Delhi",
       },
       {
+        "id": "3",
         "image":
         "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80",
         "title": "Social",
@@ -131,6 +134,7 @@ class _ExplorePageState extends State<ExplorePage> {
                       context,
                       MaterialPageRoute(
                         builder: (_) => CafesPage(
+                          placeId: places[i]['id']!,
                           imageUrl: places[i]['image']!,
                           cafeName: places[i]['title']!,
                           address: places[i]['address']!,
