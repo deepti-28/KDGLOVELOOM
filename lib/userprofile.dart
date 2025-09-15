@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'editprofile.dart';
 
 class UserProfilePage extends StatelessWidget {
   final String avatarUrl;
@@ -45,19 +46,38 @@ class UserProfilePage extends StatelessWidget {
                     ),
                   ),
                 ),
-                Container(
-                  margin: EdgeInsets.only(right: 18),
-                  padding: EdgeInsets.symmetric(horizontal: 22, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(19),
-                  ),
-                  child: Text(
-                    'Edit',
-                    style: TextStyle(
-                      color: Colors.black54,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditProfilePage(
+                          name: name,
+                          dob: '', // Pass actual DOB if available
+                          initialImage: avatarUrl,
+                          initialLocation: location,
+                          initialGalleryImages: galleryImages,
+                          initialNotes: const [], // Pass notes if needed
+                          initialDob: '', // Pass actual DOB if available
+                          initialName: name,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    margin: EdgeInsets.only(right: 18),
+                    padding: EdgeInsets.symmetric(horizontal: 22, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(19),
+                    ),
+                    child: Text(
+                      'Edit',
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),

@@ -16,7 +16,8 @@ class _ExplorePageState extends State<ExplorePage> {
   Widget build(BuildContext context) {
     List<Map<String, String>> places = [
       {
-        "image": "https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80",
+        "image":
+        "https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80",
         "title": "IQM Cafe",
         "location": "NEW DELHI",
         "distance": "16 km away",
@@ -27,7 +28,8 @@ class _ExplorePageState extends State<ExplorePage> {
         "reviewerLocation": "Pune",
       },
       {
-        "image": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80",
+        "image":
+        "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80",
         "title": "WW Park",
         "location": "NEW DELHI",
         "distance": "4.8 km away",
@@ -38,7 +40,8 @@ class _ExplorePageState extends State<ExplorePage> {
         "reviewerLocation": "Delhi",
       },
       {
-        "image": "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80",
+        "image":
+        "https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80",
         "title": "Social",
         "location": "NEW DELHI",
         "distance": "2.2 km away",
@@ -80,7 +83,8 @@ class _ExplorePageState extends State<ExplorePage> {
                           color: Colors.black54,
                         ),
                       ),
-                      const Icon(Icons.keyboard_arrow_down, size: 18, color: Colors.black45),
+                      const Icon(Icons.keyboard_arrow_down,
+                          size: 18, color: Colors.black45),
                     ],
                   ),
                   Row(
@@ -91,7 +95,8 @@ class _ExplorePageState extends State<ExplorePage> {
                       ),
                       CircleAvatar(
                         radius: 18,
-                        backgroundImage: NetworkImage("https://randomuser.me/api/portraits/women/44.jpg"),
+                        backgroundImage: NetworkImage(
+                            "https://randomuser.me/api/portraits/women/44.jpg"),
                       ),
                     ],
                   )
@@ -153,8 +158,7 @@ class _ExplorePageState extends State<ExplorePage> {
                             BoxShadow(
                                 color: Colors.black12,
                                 blurRadius: 18,
-                                offset: Offset(0, 7)
-                            ),
+                                offset: Offset(0, 7)),
                           ],
                         ),
                         child: Container(
@@ -176,7 +180,8 @@ class _ExplorePageState extends State<ExplorePage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 7, vertical: 2),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(9),
                                     color: pink,
@@ -237,7 +242,9 @@ class _ExplorePageState extends State<ExplorePage> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 11),
                         decoration: BoxDecoration(
-                          color: selectedTab == 0 ? pink.withOpacity(0.15) : Colors.transparent,
+                          color: selectedTab == 0
+                              ? pink.withOpacity(0.15)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(24),
                         ),
                         child: Center(
@@ -260,7 +267,9 @@ class _ExplorePageState extends State<ExplorePage> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 11),
                         decoration: BoxDecoration(
-                          color: selectedTab == 1 ? pink.withOpacity(0.15) : Colors.transparent,
+                          color: selectedTab == 1
+                              ? pink.withOpacity(0.15)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(24),
                         ),
                         child: Center(
@@ -417,12 +426,37 @@ class _ExplorePageState extends State<ExplorePage> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: const [
-            Icon(Icons.home, color: Colors.white, size: 26),
-            Icon(Icons.explore, color: Colors.white, size: 26),
-            Icon(Icons.search, color: Colors.white, size: 30),
-            Icon(Icons.chat_bubble_outline, color: Colors.white, size: 26),
-            Icon(Icons.person, color: Colors.white, size: 26),
+          children: [
+            IconButton(
+              icon: const Icon(Icons.home, color: Colors.white, size: 26),
+              onPressed: () {
+                Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.explore, color: Colors.white, size: 26),
+              onPressed: () {
+                Navigator.pushNamed(context, '/openstreetmap_search_page');
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.search, color: Colors.white, size: 30),
+              onPressed: () {
+                Navigator.pushNamed(context, '/explore');
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 26),
+              onPressed: () {
+                Navigator.pushNamed(context, '/message');
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.person, color: Colors.white, size: 26),
+              onPressed: () {
+                Navigator.pushNamed(context, '/userprofile');
+              },
+            ),
           ],
         ),
       ),

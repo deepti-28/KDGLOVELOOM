@@ -212,8 +212,8 @@ class CafesPage extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 22,
-                    backgroundImage: NetworkImage(
-                        "https://randomuser.me/api/portraits/women/44.jpg"),
+                    backgroundImage:
+                    NetworkImage("https://randomuser.me/api/portraits/women/44.jpg"),
                   ),
                   const SizedBox(width: 9),
                   Expanded(
@@ -230,8 +230,7 @@ class CafesPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 11),
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                           decoration: BoxDecoration(
                             color: pink,
                             borderRadius: BorderRadius.circular(17),
@@ -303,12 +302,37 @@ class CafesPage extends StatelessWidget {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: const [
-            Icon(Icons.home, color: Colors.white, size: 26),
-            Icon(Icons.explore, color: Colors.white, size: 26),
-            Icon(Icons.search, color: Colors.white, size: 30),
-            Icon(Icons.chat_bubble_outline, color: Colors.white, size: 26),
-            Icon(Icons.person, color: Colors.white, size: 26),
+          children: [
+            IconButton(
+              icon: const Icon(Icons.home, color: Colors.white, size: 26),
+              onPressed: () {
+                Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.explore, color: Colors.white, size: 26),
+              onPressed: () {
+                Navigator.pushNamed(context, '/openstreetmap_search_page');
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.search, color: Colors.white, size: 30),
+              onPressed: () {
+                Navigator.pushNamed(context, '/explore');
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 26),
+              onPressed: () {
+                Navigator.pushNamed(context, '/message');
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.person, color: Colors.white, size: 26),
+              onPressed: () {
+                Navigator.pushNamed(context, '/userprofile');
+              },
+            ),
           ],
         ),
       ),
