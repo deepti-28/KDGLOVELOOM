@@ -33,6 +33,9 @@ dependencies:
   # Optionally: For secure storage (if you use it)
   flutter_secure_storage: ^9.0.2
 
+  # Add WebSocket channel package for real-time updates
+  web_socket_channel: ^2.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

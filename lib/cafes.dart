@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'services/api_service.dart'; // Update with your actual relative or package path
 import 'note_dialog.dart'; // Update accordingly
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'dart:convert';
 
 class CafesPage extends StatefulWidget {
   final String placeId;
@@ -39,11 +41,45 @@ class _CafesPageState extends State<CafesPage> {
   bool isLoadingNotes = false;
   bool isLoadingLikes = false;
 
+  late final WebSocketChannel _channel;
+  String userId = 'user123'; // Replace with actual logged-in user ID
+  final TextEditingController _noteInputController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
+
+    _channel = WebSocketChannel.connect(
+      Uri.parse('ws://10.0.2.2:5000'), // Update with your backend WebSocket URL
+    );
+
+    _channel.stream.listen((message) {
+      final data = jsonDecode(message);
+      if (data['placeId'] != widget.placeId) return;
+
+      if (data['type'] == 'like_update') {
+        setState(() {
+          likesCount = data['likesCount'];
+          isLikedByUser = data['isLikedByUser'];
+        });
+      } else if (data['type'] == 'new_note') {
+        setState(() {
+          notes.insert(0, data['note']);
+        });
+      }
+    }, onError: (error) {
+      print('WebSocket error: $error');
+    });
+
     _fetchPlaceDetails();
     _fetchNotes();
+  }
+
+  @override
+  void dispose() {
+    _channel.sink.close();
+    _noteInputController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchPlaceDetails() async {
@@ -52,7 +88,7 @@ class _CafesPageState extends State<CafesPage> {
       final placeData = await _apiService.getPlaceDetails(widget.placeId);
       setState(() {
         likesCount = (placeData['likes'] as List<dynamic>).length;
-        // TODO: Detect if current user liked the place
+        // TODO: Detect if current user liked the place and set isLikedByUser accordingly
         isLikedByUser = false;
       });
     } catch (_) {
@@ -77,23 +113,30 @@ class _CafesPageState extends State<CafesPage> {
   }
 
   Future<void> _toggleLike() async {
-    setState(() => isLoadingLikes = true);
-    bool success = await _apiService.toggleLikePlace(widget.placeId);
-    if (success) {
-      setState(() {
-        if (isLikedByUser) {
-          likesCount = (likesCount > 0) ? likesCount - 1 : 0;
-          isLikedByUser = false;
-        } else {
-          likesCount += 1;
-          isLikedByUser = true;
-        }
-      });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update like.')));
-    }
-    setState(() => isLoadingLikes = false);
+    _channel.sink.add(jsonEncode({
+      'type': 'toggle_like',
+      'placeId': widget.placeId,
+      'userId': userId,
+    }));
+  }
+
+  Future<void> _sendNote(String text) async {
+    if (text.trim().isEmpty) return;
+
+    Map<String, dynamic> note = {
+      'text': text.trim(),
+      'user': {
+        'name': 'You',
+        'profileImagePath': null,
+      },
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    _channel.sink.add(jsonEncode({
+      'type': 'add_note',
+      'placeId': widget.placeId,
+      'note': note,
+    }));
   }
 
   Future<void> _openAddNote() async {
@@ -127,36 +170,7 @@ class _CafesPageState extends State<CafesPage> {
           height: 400,
           child: ListView.builder(
             itemCount: notes.length,
-            itemBuilder: (context, index) {
-              final note = notes[index];
-              final user = note['user'] ?? {};
-              final userName = user['name'] ?? 'Anonymous';
-              final noteText = note['text'] ?? '';
-              final createdAt = note['createdAt'] ?? '';
-
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundImage: user['profileImagePath'] != null
-                      ? NetworkImage(user['profileImagePath'])
-                      : null,
-                  child: user['profileImagePath'] == null
-                      ? const Icon(Icons.person)
-                      : null,
-                ),
-                title: Text(userName),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(noteText),
-                    const SizedBox(height: 4),
-                    Text(
-                      createdAt.split('T').first,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    )
-                  ],
-                ),
-              );
-            },
+            itemBuilder: (context, index) => _buildNoteItem(notes[index]),
           ),
         );
       },
@@ -396,7 +410,7 @@ class _CafesPageState extends State<CafesPage> {
 
           const SizedBox(height: 12),
 
-          // Comments section
+          // Comments section title
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
@@ -411,6 +425,7 @@ class _CafesPageState extends State<CafesPage> {
           ),
           const SizedBox(height: 8),
 
+          // Notes list or loading or empty state
           isLoadingNotes
               ? const Center(child: CircularProgressIndicator())
               : notes.isEmpty
@@ -429,6 +444,36 @@ class _CafesPageState extends State<CafesPage> {
                       itemBuilder: (context, index) =>
                           _buildNoteItem(notes[index]),
                     ),
+
+          const SizedBox(height: 16),
+
+          // Input bar to add note directly
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _noteInputController,
+                    decoration: const InputDecoration(
+                      hintText: 'Add a note...',
+                      border: OutlineInputBorder(),
+                    ),
+                    minLines: 1,
+                    maxLines: 3,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.send, color: Color(0xFFF45B62)),
+                  onPressed: () {
+                    _sendNote(_noteInputController.text);
+                    _noteInputController.clear();
+                  },
+                )
+              ],
+            ),
+          ),
 
           const SizedBox(height: 24),
         ],
