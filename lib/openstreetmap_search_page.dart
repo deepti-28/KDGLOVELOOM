@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geocoding/geocoding.dart';
+import 'userdata.dart'; // Assumed to define your `users` list and User model
+import 'chat.dart'; // The chat page you'll navigate to
 
 class OpenStreetMapSearchPage extends StatefulWidget {
   @override
@@ -51,6 +53,18 @@ class _OpenStreetMapSearchPageState extends State<OpenStreetMapSearchPage> {
     );
   }
 
+  void _openChat(user) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatPage(
+          contactUsername: user.name,
+          contactAvatarUrl: user.profileImageUrl,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,7 +94,41 @@ class _OpenStreetMapSearchPageState extends State<OpenStreetMapSearchPage> {
             urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             subdomains: ['a', 'b', 'c'],
           ),
-          MarkerLayer(markers: _searchedMarker != null ? [_searchedMarker!] : []),
+          MarkerLayer(
+            markers: [
+              if (_searchedMarker != null) _searchedMarker!,
+              ...users.map((user) => Marker(
+                width: 70,
+                height: 70,
+                point: user.location,
+                builder: (_) => GestureDetector(
+                  onTap: () => _openChat(user),
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.amber,
+                        width: 5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 7,
+                          offset: Offset(0, 3),
+                        )
+                      ],
+                    ),
+                    child: CircleAvatar(
+                      radius: 30,
+                      backgroundImage: NetworkImage(user.profileImageUrl),
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              )),
+            ],
+          ),
         ],
       ),
     );

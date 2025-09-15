@@ -20,21 +20,24 @@ class _ChatPageState extends State<ChatPage> {
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> messages = [];
 
+  // OPTIONAL: If you have your current user's avatar URL, set it here.
+  final String currentUserAvatarUrl = 'https://randomuser.me/api/portraits/men/35.jpg';
+
   @override
   void initState() {
     super.initState();
-    // Example dummy initial messages (adjust as needed)
+    // Example dummy initial messages
     messages.addAll([
       {
         'fromMe': false,
         'text': "Sounds exactly like I am feeling currently and it is so frustrating I can't even explain.",
-        'timestamp': DateTime.now().subtract(Duration(minutes: 7)),
+        'timestamp': DateTime.now().subtract(const Duration(minutes: 7)),
         'isReply': true,
       },
       {
         'fromMe': true,
         'text': "Fr! How do you deal with this stuff?",
-        'timestamp': DateTime.now().subtract(Duration(minutes: 2)),
+        'timestamp': DateTime.now().subtract(const Duration(minutes: 2)),
       },
     ]);
   }
@@ -57,12 +60,12 @@ class _ChatPageState extends State<ChatPage> {
     final timeStr = DateFormat('d MMM, yy | h:mm a').format(msg['timestamp']);
     return Row(
       mainAxisAlignment:
-      msg['fromMe'] ? MainAxisAlignment.end : MainAxisAlignment.start,
+          msg['fromMe'] ? MainAxisAlignment.end : MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (!msg['fromMe'])
           Padding(
-            padding: EdgeInsets.only(right: 10, top: 6),
+            padding: const EdgeInsets.only(right: 10, top: 6),
             child: CircleAvatar(
               radius: 17,
               backgroundImage: NetworkImage(widget.contactAvatarUrl),
@@ -72,10 +75,10 @@ class _ChatPageState extends State<ChatPage> {
         Flexible(
           child: Column(
             crossAxisAlignment:
-            msg['fromMe'] ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                msg['fromMe'] ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               if (msg['isReply'] ?? false)
-                Text(
+                const Text(
                   'Replied to your text',
                   style: TextStyle(
                     fontSize: 13,
@@ -85,7 +88,7 @@ class _ChatPageState extends State<ChatPage> {
               Container(
                 margin: const EdgeInsets.only(top: 5),
                 padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: msg['fromMe'] ? pink : Colors.black12,
                   borderRadius: BorderRadius.circular(16),
@@ -101,7 +104,7 @@ class _ChatPageState extends State<ChatPage> {
               const SizedBox(height: 5),
               Text(
                 timeStr,
-                style: TextStyle(color: Colors.black45, fontSize: 11),
+                style: const TextStyle(color: Colors.black45, fontSize: 11),
               ),
             ],
           ),
@@ -111,8 +114,7 @@ class _ChatPageState extends State<ChatPage> {
             padding: const EdgeInsets.only(left: 10, top: 6),
             child: CircleAvatar(
               radius: 17,
-              backgroundImage:
-              NetworkImage('https://randomuser.me/api/portraits/men/35.jpg'),  // Your photo URL here
+              backgroundImage: NetworkImage(currentUserAvatarUrl),
               backgroundColor: pink.withOpacity(0.1),
             ),
           ),
@@ -142,8 +144,7 @@ class _ChatPageState extends State<ChatPage> {
                       children: [
                         CircleAvatar(
                           radius: 22,
-                          backgroundImage:
-                          NetworkImage(widget.contactAvatarUrl),
+                          backgroundImage: NetworkImage(widget.contactAvatarUrl),
                           backgroundColor: pink.withOpacity(0.11),
                         ),
                         const SizedBox(height: 6),
