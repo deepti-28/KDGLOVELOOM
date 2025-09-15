@@ -5,10 +5,10 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
-import 'findthematch.dart';  // Import FindTheMatchPage
+import 'findthematch.dart';
 import 'editprofile.dart';
-import 'message.dart';  // Import MessagePage
-import 'openstreetmap_search_page.dart'; // Import your new OpenStreetMap search screen
+import 'message.dart';
+import 'openstreetmap_search_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final String? userName;
@@ -22,9 +22,8 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   String? uploadedImagePath;
-
-  // Sample users list; replace with backend data as needed
   List<Map<String, dynamic>> users = [];
+  List<String> userNotes = [];
 
   @override
   void initState() {
@@ -51,7 +50,6 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  // Open OpenStreetMap search page
   void _openMapSearch() {
     Navigator.push(
       context,
@@ -59,7 +57,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // Fetch nearby users from backend
   Future<List<Map<String, dynamic>>> fetchUsersForArea(LatLng areaLatLng) async {
     final url = Uri.parse(
         'http://10.0.2.2:3000/users-nearby?lat=${areaLatLng.latitude}&lon=${areaLatLng.longitude}');
@@ -75,15 +72,90 @@ class _DashboardPageState extends State<DashboardPage> {
     return [];
   }
 
+  void _showAddNoteDialog() async {
+    String newNote = '';
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Add a note', style: TextStyle(color: Color(0xFFF45B62))),
+        content: TextField(
+          autofocus: true,
+          decoration: InputDecoration(hintText: "Type your note here"),
+          onChanged: (val) => newNote = val,
+        ),
+        actions: [
+          TextButton(
+            child: Text('Cancel', style: TextStyle(color: Colors.black54)),
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(0xFFF45B62),
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Add'),
+            onPressed: () {
+              if (newNote.trim().isNotEmpty) {
+                setState(() => userNotes.insert(0, newNote.trim()));
+              }
+              Navigator.of(ctx).pop();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNoteList() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.all(18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Your Notes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            SizedBox(height: 10),
+            if (userNotes.isEmpty)
+              Text('No notes added yet.', style: TextStyle(color: Colors.black45)),
+            if (userNotes.isNotEmpty)
+              ...userNotes.map((note) => Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.note, color: Color(0xFFF45B62), size: 21),
+                        SizedBox(width: 8),
+                        Expanded(child: Text(note, style: TextStyle(fontSize: 16))),
+                      ],
+                    ),
+                  )),
+            SizedBox(height: 12),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFF45B62),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
+              ),
+              onPressed: _showAddNoteDialog,
+              child: Text('Add a new note'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pink = const Color(0xFFF45B62);
+    final babyPink = const Color(0xFFFFE4EF);
 
     final topRightIcons = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         GestureDetector(
-          onTap: _openEditProfile,  // "+" button opens Edit Profile now
+          onTap: _showNoteList, // "+" button at top right opens note list
           child: Container(
             width: 44,
             height: 44,
@@ -157,95 +229,141 @@ class _DashboardPageState extends State<DashboardPage> {
     );
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Stack(
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: const [
-                      Icon(Icons.menu, size: 28, color: Colors.black87),
-                      SizedBox(width: 12),
-                      Text(
-                        "New Delhi",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ],
-                  ),
-                  topRightIcons,
-                ],
+            DrawerHeader(
+              decoration: BoxDecoration(color: pink),
+              child: Text(
+                'Menu',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            Column(
-              children: [
-                const SizedBox(height: 90),
-                Padding(
-                  padding: const EdgeInsets.only(left: 23),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: RichText(
-                      text: TextSpan(
-                        text: "Hi, ",
-                        style: TextStyle(
-                          color: pink,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 26,
-                          fontFamily: 'Nunito',
-                        ),
-                        children: <TextSpan>[
-                          TextSpan(
-                            text: widget.userName ?? "User",
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 21,
-                              fontFamily: 'Nunito',
+            ListTile(
+              leading: Icon(Icons.settings, color: pink),
+              title: Text("Settings"),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.person, color: pink),
+              title: Text("Profile"),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.info, color: pink),
+              title: Text("About"),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.logout, color: pink),
+              title: Text("Logout"),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+      backgroundColor: babyPink,
+      body: SafeArea(
+        child: Container(
+          color: babyPink,
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Scaffold.of(context).openDrawer(),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.menu, size: 28, color: Colors.black87),
+                          const SizedBox(width: 12),
+                          Text(
+                            "loveloom",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: pink,
+                              letterSpacing: 1,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 25),
-                profileCircle,
-                const SizedBox(height: 40),
-                Column(
-                  children: [
-                    Text(
-                      "in this chaos let's find your",
-                      style: TextStyle(
-                        fontSize: 20,
-                        color: Colors.black54,
-                        fontFamily: 'Nunito',
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    Text(
-                      "cosmos!",
-                      style: TextStyle(
-                        color: pink,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        fontStyle: FontStyle.italic,
-                        fontFamily: 'Nunito',
-                      ),
-                    ),
+                    topRightIcons,
                   ],
                 ),
-                const Spacer(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 37),
-                  child: Column(
+              ),
+              Column(
+                children: [
+                  const SizedBox(height: 90),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 23),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: RichText(
+                        text: TextSpan(
+                          text: "Hi, ",
+                          style: TextStyle(
+                            color: pink,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 26,
+                            fontFamily: 'Nunito',
+                          ),
+                          children: <TextSpan>[
+                            TextSpan(
+                              text: widget.userName ?? "User",
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 21,
+                                fontFamily: 'Nunito',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 25),
+                  profileCircle,
+                  const SizedBox(height: 22),
+                  Column(
                     children: [
+                      Text(
+                        "in this chaos let's find your",
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.black54,
+                          fontFamily: 'Nunito',
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      Text(
+                        "cosmos!",
+                        style: TextStyle(
+                          color: pink,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          fontStyle: FontStyle.italic,
+                          fontFamily: 'Nunito',
+                        ),
+                      ),
+                      SizedBox(height: 23),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -264,8 +382,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             );
                           },
                           child: const Text(
-                            'Find a match',
+                            'Find your match',
                             style: TextStyle(
+                              color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 19,
                             ),
@@ -284,25 +403,24 @@ class _DashboardPageState extends State<DashboardPage> {
                             elevation: 5,
                             padding: const EdgeInsets.symmetric(vertical: 19),
                           ),
-                          onPressed: () {
-                            // You can define behavior for Explore button here if desired
-                          },
+                          onPressed: () {},
                           child: const Text(
                             'Explore',
                             style: TextStyle(
+                              color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 19,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 30),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ],
+                  const Spacer(),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: Container(
@@ -365,3 +483,4 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 }
+

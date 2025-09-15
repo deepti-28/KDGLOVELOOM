@@ -13,28 +13,46 @@ class _MessagePageState extends State<MessagePage> {
 
   final List<Map<String, String>> allChats = [
     {
+      'avatar': 'https://randomuser.me/api/portraits/men/12.jpg',
+      'username': 'Aman',
+      'subtitle': "Fr! How do you deal with this stuff?",
+      'time': '2 min ago',
+    },
+    {
+      'avatar': 'https://randomuser.me/api/portraits/women/10.jpg',
+      'username': 'Riya',
+      'subtitle': "I am passionate about photography and travel.",
+      'time': 'Yesterday',
+    },
+    {
+      'avatar': 'https://randomuser.me/api/portraits/women/11.jpg',
+      'username': 'Shrishti',
+      'subtitle': "I love baking and painting.",
+      'time': '1 hour ago',
+    },
+    {
       'avatar': 'https://randomuser.me/api/portraits/men/43.jpg',
       'username': '@shikhu',
       'subtitle': 'sent you an invite to chat',
-      'time': ''
+      'time': '',
     },
     {
       'avatar': 'https://randomuser.me/api/portraits/women/39.jpg',
       'username': 'Jenny Wilson',
       'subtitle': 'Let\'s meet tomorrow !',
-      'time': '2 min ago'
+      'time': '2 min ago',
     },
     {
       'avatar': 'https://randomuser.me/api/portraits/men/20.jpg',
       'username': 'Rahul Mehta',
       'subtitle': 'How are you?',
-      'time': '1 hour ago'
+      'time': '1 hour ago',
     },
     {
       'avatar': 'https://randomuser.me/api/portraits/women/5.jpg',
       'username': 'Priya',
       'subtitle': 'Birthday party details...',
-      'time': 'Yesterday'
+      'time': 'Yesterday',
     },
   ];
 

@@ -20,13 +20,11 @@ class _ChatPageState extends State<ChatPage> {
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> messages = [];
 
-  // OPTIONAL: If you have your current user's avatar URL, set it here.
   final String currentUserAvatarUrl = 'https://randomuser.me/api/portraits/men/35.jpg';
 
   @override
   void initState() {
     super.initState();
-    // Example dummy initial messages
     messages.addAll([
       {
         'fromMe': false,
@@ -174,7 +172,34 @@ class _ChatPageState extends State<ChatPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            // Heart and cross buttons just above message input
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10, top: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  RawMaterialButton(
+                    onPressed: () {
+                      // Heart button logic here
+                    },
+                    fillColor: pink,
+                    shape: const CircleBorder(),
+                    constraints: const BoxConstraints(minWidth: 55, minHeight: 55),
+                    child: const Icon(Icons.favorite, color: Colors.white, size: 30),
+                  ),
+                  const SizedBox(width: 30),
+                  RawMaterialButton(
+                    onPressed: () {
+                      // Cross button logic here
+                    },
+                    fillColor: Colors.grey.shade300,
+                    shape: const CircleBorder(),
+                    constraints: const BoxConstraints(minWidth: 55, minHeight: 55),
+                    child: const Icon(Icons.close, color: Colors.black54, size: 28),
+                  ),
+                ],
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
               child: Row(

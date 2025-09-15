@@ -1,3 +1,4 @@
+
 import 'package:latlong2/latlong.dart';
 
 class User {
@@ -5,12 +6,14 @@ class User {
   final LatLng location;
   final String profileImageUrl;
   final String notes;
+  final int replyCount; // Number of replies
 
   const User({
     required this.name,
     required this.location,
     required this.profileImageUrl,
     required this.notes,
+    this.replyCount = 0, // Default to 0 (no replies)
   });
 }
 
@@ -19,18 +22,21 @@ final List<User> users = [
     name: "RIYA",
     location: LatLng(28.643430031477237, 77.07278678504603),
     profileImageUrl: "https://randomuser.me/api/portraits/women/10.jpg",
-    notes: "I am passionate about photography and travel.",
+    notes: "Hahaaa Your thoughts are insane ",
+    replyCount: 1, // Riya replied twice
   ),
   User(
     name: "SHRISHTI",
     location: LatLng(28.64264087739207, 77.07806716776741),
     profileImageUrl: "https://randomuser.me/api/portraits/women/11.jpg",
-    notes: "I love baking and painting.",
+    notes: "Lets Catch Up",
+    replyCount: 1, // Shrishti replied three times
   ),
   User(
     name: "AMAN",
     location: LatLng(28.642424890063463, 77.0764554951324),
     profileImageUrl: "https://randomuser.me/api/portraits/men/12.jpg",
-    notes: " I enjoy cycling and gaming.",
+    notes: "Hey Whatsup?.",
+    replyCount: 1, // Aman replied once
   ),
 ];

@@ -103,27 +103,58 @@ class _OpenStreetMapSearchPageState extends State<OpenStreetMapSearchPage> {
                 point: user.location,
                 builder: (_) => GestureDetector(
                   onTap: () => _openChat(user),
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.amber,
-                        width: 5,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.amber,
+                            width: 5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 7,
+                              offset: Offset(0, 3),
+                            )
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          radius: 30,
+                          backgroundImage: NetworkImage(user.profileImageUrl),
+                          backgroundColor: Colors.white,
+                        ),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 7,
-                          offset: Offset(0, 3),
-                        )
-                      ],
-                    ),
-                    child: CircleAvatar(
-                      radius: 30,
-                      backgroundImage: NetworkImage(user.profileImageUrl),
-                      backgroundColor: Colors.white,
-                    ),
+                      if ((user.replyCount ?? 0) > 0)
+                        Positioned(
+                          right: -2,
+                          top: -2,
+                          child: Container(
+                            width: 19,
+                            height: 19,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 2,
+                              ),
+                            ),
+                            child: const Text(
+                              "1",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               )),
