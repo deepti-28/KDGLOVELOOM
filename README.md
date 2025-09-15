@@ -60,13 +60,13 @@ Once logged in, the user sees the dashboard with the following features:
 
 ## Technology Stack
 
-| Component      | Technology         |
-| -------------- | ------------------ |
-| Frontend       | Flutter            |
-| Backend        | Node.js            |
-| Database       | MongoDB            |
-| Authentication | Username & Password|
-| Location       | Device Geolocation |
+| Component      | Technology              |
+| -------------- | ----------------------- |
+| Frontend       | Flutter                 |
+| Backend        | Node.js + WebSocket     |
+| Database       | MongoDB                 |
+| Authentication | Username & Password     |
+| Location       | Device Geolocation      |
 
 ## Installation & Setup
 
@@ -90,20 +90,24 @@ Once logged in, the user sees the dashboard with the following features:
   flutter pub get
   ```
 
-3. Setup backend:
-- Go to backend folder.
-- Install backend dependencies:
-  ```
-  npm install
-  ```
-
-- Create a `.env` file with environment variables:
-  - MongoDB connection URI
-  - Any other backend configuration
-- Start the backend server:
-  ```
-  npm start
-  ```
+3. Setup backend and MongoDB
+Make sure MongoDB server is running continuously by executing:
+```
+mongod
+```
+In another terminal, navigate to the backend folder and install dependencies including WebSocket:
+```
+npm install
+npm install ws
+```
+Start the backend server:
+```
+npm start
+```
+Meanwhile, in a separate terminal, run your Flutter app:
+```
+flutter run
+```
 
 4. Update frontend API endpoint URLs to point to your backend server in Flutter project config files.
 
@@ -136,4 +140,4 @@ Once logged in, the user sees the dashboard with the following features:
 
 
 
-Made with ❤️ using Flutter, Node.js, and MongoDB.
+Made with ❤️ using Flutter, Node.js,WebSocket and MongoDB.
