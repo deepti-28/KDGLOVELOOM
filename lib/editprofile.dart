@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'services/api_service.dart';
 
 class EditProfilePage extends StatefulWidget {
   final String? name;
@@ -9,6 +10,8 @@ class EditProfilePage extends StatefulWidget {
   final String? initialLocation;
   final List<String>? initialGalleryImages;
   final List<String>? initialNotes;
+  final String? initialName;
+  final String? initialDob;
 
   const EditProfilePage({
     Key? key,
@@ -17,7 +20,9 @@ class EditProfilePage extends StatefulWidget {
     this.initialImage,
     this.initialLocation,
     this.initialGalleryImages,
-    this.initialNotes, required String initialDob, String? initialName,
+    this.initialNotes,
+    this.initialName,
+    this.initialDob,
   }) : super(key: key);
 
   @override
@@ -26,76 +31,81 @@ class EditProfilePage extends StatefulWidget {
 
 class _EditProfilePageState extends State<EditProfilePage> {
   final Color pink = const Color(0xFFF43045);
-  String? imagePath;
-  List<String> galleryImages = [];
-  List<String> notes = [];
 
   late TextEditingController _nameController;
   late TextEditingController _dobController;
   late TextEditingController _locationController;
 
+  String? imagePath;
+  List<String> galleryImages = [];
+  List<String> notes = [];
+
   final ImagePicker _picker = ImagePicker();
+  final ApiService _apiService = ApiService();
+
+  bool _saving = false;
+  String? _errorMsg;
 
   @override
   void initState() {
     super.initState();
+
+    _nameController =
+        TextEditingController(text: widget.name ?? widget.initialName ?? '');
+    _dobController =
+        TextEditingController(text: widget.dob ?? widget.initialDob ?? '');
+    _locationController =
+        TextEditingController(text: widget.initialLocation ?? '');
     imagePath = widget.initialImage;
-    _nameController = TextEditingController(text: widget.name ?? '');
-    _dobController = TextEditingController(text: widget.dob ?? '');
-    _locationController = TextEditingController(text: widget.initialLocation ?? '');
-    galleryImages = List<String>.from(widget.initialGalleryImages ?? []);
-    notes = List<String>.from(widget.initialNotes ?? []);
+    galleryImages =
+        widget.initialGalleryImages != null ? List.from(widget.initialGalleryImages!) : [];
+    notes = widget.initialNotes != null ? List.from(widget.initialNotes!) : [];
   }
 
   Future<void> _pickImageFromGallery() async {
-    final picked = await _picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
       setState(() {
-        imagePath = picked.path;
+        imagePath = pickedFile.path;
       });
     }
   }
 
   Future<void> _pickGalleryImage() async {
-    final picked = await _picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
       setState(() {
-        galleryImages.add(picked.path);
+        galleryImages.add(pickedFile.path);
       });
     }
   }
 
-  void _navigateToNotePage() {
-    Navigator.pushNamed(context, '/note');
-  }
-
   void _addNote() {
-    String note = "";
+    String newNote = '';
     showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text("Add Note", style: TextStyle(color: pink)),
-            content: TextField(
-              autofocus: true,
-              decoration: const InputDecoration(hintText: "Write your note here"),
-              onChanged: (value) => note = value,
-            ),
-            actions: [
-              TextButton(
-                child: Text("Add", style: TextStyle(color: pink, fontWeight: FontWeight.bold)),
-                onPressed: () {
-                  if (note.trim().isNotEmpty) {
-                    setState(() {
-                      notes.add(note.trim());
-                    });
-                  }
-                  Navigator.of(context).pop();
-                },
-              )
-            ],
-          );
-        });
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text("Add Note", style: TextStyle(color: pink)),
+        content: TextField(
+          autofocus: true,
+          decoration: const InputDecoration(hintText: "Write your note here"),
+          onChanged: (val) => newNote = val,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              if (newNote.trim().isNotEmpty) {
+                setState(() {
+                  notes.insert(0, newNote.trim());
+                });
+              }
+              Navigator.of(ctx).pop();
+            },
+            child: const Text("Add", style: TextStyle(fontWeight: FontWeight.bold)),
+          )
+        ],
+      ),
+    );
   }
 
   Widget _profileAvatar() {
@@ -112,25 +122,32 @@ class _EditProfilePageState extends State<EditProfilePage> {
         child: CircleAvatar(
           radius: 56,
           backgroundColor: Colors.white,
-          backgroundImage: (imagePath != null) ? FileImage(File(imagePath!)) : null,
-          child: (imagePath == null)
-              ? Icon(Icons.person, size: 72, color: Colors.grey[400])
-              : null,
+          backgroundImage: imagePath != null ? FileImage(File(imagePath!)) : null,
+          child:
+              imagePath == null ? Icon(Icons.person, size: 72, color: Colors.grey[400]) : null,
         ),
       ),
     );
   }
 
-  Widget _inputSection({required String label, required TextEditingController controller, bool bold = false}) {
+  Widget _inputSection(
+      {required String label,
+      required TextEditingController controller,
+      bool bold = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 15, color: Colors.black54, fontWeight: FontWeight.w500)),
+          Text(label,
+              style:
+                  const TextStyle(fontSize: 15, color: Colors.black54, fontWeight: FontWeight.w500)),
           TextField(
             controller: controller,
-            style: TextStyle(fontSize: 17.5, fontWeight: bold ? FontWeight.bold : FontWeight.normal, color: Colors.black87),
+            style: TextStyle(
+                fontSize: 17.5,
+                fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+                color: Colors.black87),
             decoration: const InputDecoration(
               isDense: true,
               border: InputBorder.none,
@@ -149,14 +166,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Gallery", style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500, fontSize: 15)),
+          const Text("Gallery",
+              style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500)),
           const SizedBox(height: 8),
           SizedBox(
             height: 72,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: galleryImages.length + 1,
-              itemBuilder: (context, index) {
+              itemBuilder: (ctx, index) {
                 if (index < galleryImages.length) {
                   return Padding(
                     padding: const EdgeInsets.only(right: 10),
@@ -172,16 +190,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   );
                 }
                 return GestureDetector(
-                  onTap: _navigateToNotePage,
+                  onTap: _pickGalleryImage,
                   child: Container(
                     width: 62,
                     height: 62,
                     decoration: BoxDecoration(
+                      color: pink.withOpacity(0.09),
                       borderRadius: BorderRadius.circular(13),
                       border: Border.all(color: pink, width: 2),
-                      color: pink.withOpacity(0.09),
                     ),
-                    child: Icon(Icons.add, color: pink, size: 30),
+                    child: const Icon(Icons.add, color: Colors.redAccent, size: 30),
                   ),
                 );
               },
@@ -194,57 +212,76 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Widget _notesSection() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text("Notes", style: TextStyle(fontSize: 15.5, color: Colors.black87)),
-              IconButton(icon: Icon(Icons.add_circle_outline, color: pink, size: 22), onPressed: _addNote),
+              const Text("Notes",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black87)),
+              IconButton(icon: Icon(Icons.add_circle_outline, color: pink), onPressed: _addNote),
             ],
           ),
-          ...notes.map((note) => Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(note, style: TextStyle(fontSize: 14, color: Colors.black87)),
-          )),
+          if (notes.isEmpty)
+            const Text(
+              "No notes added yet.",
+              style: TextStyle(fontSize: 14, color: Colors.black54),
+            ),
+          ...notes
+              .map((e) => Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.note, size: 18),
+                        const SizedBox(width: 8),
+                        Flexible(child: Text(e)),
+                      ],
+                    ),
+                  ))
+              .toList(),
         ],
       ),
     );
   }
 
-  Widget _editPhotoText() {
-    return GestureDetector(
-      onTap: _pickImageFromGallery,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 13),
-        child: Text(
-          "Edit profile photo",
-          style: TextStyle(color: pink, fontWeight: FontWeight.bold, fontSize: 17),
-        ),
-      ),
-    );
-  }
+  Future<void> _saveProfile() async {
+    setState(() {
+      _saving = true;
+      _errorMsg = null;
+    });
 
-  Widget _bottomBar() {
-    return Container(
-      height: 62,
-      decoration: BoxDecoration(
-        color: pink,
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(36), topRight: Radius.circular(36)),
-        boxShadow: [BoxShadow(color: pink.withOpacity(0.09), blurRadius: 18, offset: Offset(0, -2))],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          IconButton(icon: Icon(Icons.home, color: Colors.white), onPressed: () => Navigator.pop(context)),
-          IconButton(icon: Icon(Icons.explore, color: Colors.white), onPressed: () {}),
-          IconButton(icon: Icon(Icons.add_circle_outline, color: Colors.white), onPressed: _pickGalleryImage),
-          IconButton(icon: Icon(Icons.chat_bubble_outline, color: Colors.white), onPressed: () {}),
-          IconButton(icon: Icon(Icons.person, color: Colors.white), onPressed: () {}),
-        ],
-      ),
+    String? profileImageUrl = imagePath;
+    if (imagePath != null && !imagePath!.startsWith('http')) {
+      // Upload local image
+      final url = await _apiService.uploadProfileImage(File(imagePath!));
+      if (url != null) profileImageUrl = url;
+    }
+
+    bool success = await _apiService.updateProfile(
+      name: _nameController.text.trim(),
+      dob: _dobController.text.trim(),
+      location: _locationController.text.trim(),
+      profileImagePath: profileImageUrl,
+      galleryImages: galleryImages,
+      notes: notes,
     );
+
+    setState(() {
+      _saving = false;
+      if (success) {
+        Navigator.pop(context, {
+          'name': _nameController.text.trim(),
+          'dob': _dobController.text.trim(),
+          'location': _locationController.text.trim(),
+          'image': profileImageUrl,
+          'galleryImages': galleryImages,
+          'notes': notes,
+        });
+      } else {
+        _errorMsg = "Failed to save profile. Please try again.";
+      }
+    });
   }
 
   @override
@@ -253,63 +290,95 @@ class _EditProfilePageState extends State<EditProfilePage> {
       backgroundColor: Colors.white,
       bottomNavigationBar: _bottomBar(),
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(50),
+        preferredSize: const Size.fromHeight(56),
         child: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: pink, size: 26),
+            icon: Icon(Icons.arrow_back_ios, color: pink),
             onPressed: () => Navigator.pop(context),
           ),
           centerTitle: true,
-          title: Text(
-            "Edit profile",
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 19, color: Colors.black),
-          ),
+          title: Text('Edit Profile',
+              style: const TextStyle(
+                  color: Colors.black87, fontSize: 20, fontWeight: FontWeight.bold)),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context, {
-                  'image': imagePath,
-                  'name': _nameController.text,
-                  'dob': _dobController.text,
-                  'location': _locationController.text,
-                  'galleryImages': galleryImages,
-                  'notes': notes,
-                });
-              },
-              child: Text(
-                "Save",
-                style: TextStyle(color: pink, fontWeight: FontWeight.bold, fontSize: 16.5),
-              ),
+              onPressed: _saving ? null : _saveProfile,
+              child: _saving
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.redAccent,
+                      ),
+                    )
+                  : Text("Save",
+                      style: TextStyle(color: pink, fontWeight: FontWeight.w600, fontSize: 18)),
             )
           ],
         ),
       ),
       body: SingleChildScrollView(
-        physics: BouncingScrollPhysics(),
-        padding: EdgeInsets.only(bottom: 32),
+        padding: const EdgeInsets.only(bottom: 32),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(height: 8),
-            Center(
-              child: Column(
-                children: [
-                  _profileAvatar(),
-                  _editPhotoText(),
-                ],
+            if (_errorMsg != null)
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Text(_errorMsg!,
+                    style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+                    textAlign: TextAlign.center),
               ),
-            ),
+            const SizedBox(height: 10),
+            Center(child: Column(children: [_profileAvatar(), _editPhotoText()])),
             _inputSection(label: "Name", controller: _nameController, bold: true),
             _inputSection(label: "Date of birth", controller: _dobController, bold: true),
             _inputSection(label: "Location", controller: _locationController),
             _gallerySection(),
             _notesSection(),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
+
+  Widget _editPhotoText() => GestureDetector(
+        onTap: _pickImageFromGallery,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Text(
+            "Edit Profile Photo",
+            style: TextStyle(
+              color: pink,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+        ),
+      );
+
+  Widget _bottomBar() => Container(
+        height: 62,
+        decoration: BoxDecoration(
+          color: pink,
+          borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(32), topRight: Radius.circular(32)),
+          boxShadow: [BoxShadow(color: pink.withOpacity(0.1), blurRadius: 8)],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+                icon: const Icon(Icons.home, color: Colors.white),
+                onPressed: () => Navigator.pop(context)),
+            IconButton(icon: const Icon(Icons.search, color: Colors.white), onPressed: () {}),
+            IconButton(icon: const Icon(Icons.add, color: Colors.white), onPressed: _pickGalleryImage),
+            IconButton(icon: const Icon(Icons.message, color: Colors.white), onPressed: () {}),
+            IconButton(icon: const Icon(Icons.person, color: Colors.white), onPressed: () {}),
+          ],
+        ),
+      );
 }

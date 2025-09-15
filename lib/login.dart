@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'services/api_service.dart';  // Adjust path if needed
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -13,9 +14,13 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
   String? usernameError;
   String? passwordError;
+  String? loginError;
+  bool _isLoading = false;
 
   final Color pink = const Color(0xFFF45D6B);
   final Color darkText = const Color(0xFF282828);
+
+  final ApiService _apiService = ApiService();
 
   void _showLoginSuccessAndNavigate() {
     showDialog(
@@ -120,26 +125,51 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  void _validateAndLogin() {
+  void _validateAndLogin() async {
     setState(() {
       usernameError = null;
       passwordError = null;
-      final usernameText = _usernameController.text.trim();
-      final passwordText = _passwordController.text;
-
-      if (usernameText.isEmpty) {
-        usernameError = "Please enter username or email";
-      }
-
-      if (passwordText.isEmpty) {
-        passwordError = "Please enter password";
-      } else if (passwordText.length < 6) {
-        passwordError = "Password too short";
-      }
+      loginError = null;
     });
 
+    final usernameText = _usernameController.text.trim();
+    final passwordText = _passwordController.text;
+
+    if (usernameText.isEmpty) {
+      setState(() {
+        usernameError = "Please enter username or email";
+      });
+    }
+
+    if (passwordText.isEmpty) {
+      setState(() {
+        passwordError = "Please enter password";
+      });
+    } else if (passwordText.length < 6) {
+      setState(() {
+        passwordError = "Password too short";
+      });
+    }
+
     if (usernameError == null && passwordError == null) {
-      _showLoginSuccessAndNavigate();
+      setState(() => _isLoading = true);
+
+      try {
+        bool success = await _apiService.login(usernameText, passwordText);
+        if (success) {
+          _showLoginSuccessAndNavigate();
+        } else {
+          setState(() {
+            loginError = "Invalid username or password";
+          });
+        }
+      } catch (e) {
+        setState(() {
+          loginError = "Login failed: ${e.toString()}";
+        });
+      } finally {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -249,6 +279,14 @@ class _LoginPageState extends State<LoginPage> {
               ),
               style: TextStyle(fontSize: 16, color: darkText),
             ),
+            if (loginError != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  loginError!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerRight,
@@ -271,12 +309,14 @@ class _LoginPageState extends State<LoginPage> {
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                onPressed: _validateAndLogin,
-                child: const Text(
-                  'Log In',
-                  style: TextStyle(
-                      fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
-                ),
+                onPressed: _isLoading ? null : _validateAndLogin,
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'Log In',
+                        style: TextStyle(
+                            fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
               ),
             ),
             const SizedBox(height: 16),

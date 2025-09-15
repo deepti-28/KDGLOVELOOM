@@ -1,21 +1,25 @@
 import 'dart:io';
-import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
-import 'package:latlong2/latlong.dart';
 import 'findthematch.dart';
 import 'editprofile.dart';
 import 'message.dart';
 import 'openstreetmap_search_page.dart';
-import 'explore.dart'; // <-- Add this import
+import 'explore.dart';
 
 class DashboardPage extends StatefulWidget {
   final String? userName;
   final String? profileImagePath;
+  final String? userLocation;
 
-  const DashboardPage({Key? key, this.userName, this.profileImagePath}) : super(key: key);
+  const DashboardPage({
+    Key? key,
+    this.userName,
+    this.profileImagePath,
+    this.userLocation,
+  }) : super(key: key);
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -23,212 +27,221 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   String? uploadedImagePath;
-  List<Map<String, dynamic>> users = [];
+  String? userName;
+  String? userLocation;
   List<String> userNotes = [];
+
+  final Color pink = const Color(0xFFF45A62);
+  final Color babyPink = const Color(0xFFFFEDEF);
+
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
     uploadedImagePath = widget.profileImagePath;
+    userName = widget.userName;
+    userLocation = widget.userLocation;
   }
 
-  void _openEditProfile() async {
+  Future<void> _openEditProfile() async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => EditProfilePage(
-          name: widget.userName ?? 'User',
+          name: userName ?? '',
           dob: '',
-          initialName: widget.userName,
+          initialImage: uploadedImagePath,
+          initialLocation: userLocation,
+          initialGalleryImages: [],
+          initialNotes: userNotes,
           initialDob: '',
+          initialName: userName,
         ),
       ),
     );
+
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
         uploadedImagePath = result['image'] ?? uploadedImagePath;
+        userName = result['name'] ?? userName;
+        userLocation = result['location'] ?? userLocation;
+        if (result['notes'] != null && result['notes'] is List<String>) {
+          userNotes = List<String>.from(result['notes']);
+        }
       });
     }
   }
 
-  void _openMapSearch() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => OpenStreetMapSearchPage()),
-    );
-  }
-
-  Future<List<Map<String, dynamic>>> fetchUsersForArea(LatLng areaLatLng) async {
-    final url = Uri.parse(
-        'http://10.0.2.2:3000/users-nearby?lat=${areaLatLng.latitude}&lon=${areaLatLng.longitude}');
-    try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final List data = jsonDecode(response.body);
-        return List<Map<String, dynamic>>.from(data);
-      }
-    } catch (e) {
-      print('Fetch users error: $e');
-    }
-    return [];
-  }
-
-  void _showAddNoteDialog() async {
-    String newNote = '';
-    await showDialog(
+  void _showAddNoteDialog() {
+    String newNote = "";
+    showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Add a note', style: TextStyle(color: Color(0xFFF45B62))),
+        title: Text("Add Note", style: TextStyle(color: pink)),
         content: TextField(
           autofocus: true,
-          decoration: InputDecoration(hintText: "Type your note here"),
+          decoration: InputDecoration(hintText: "Write your note here"),
           onChanged: (val) => newNote = val,
         ),
         actions: [
           TextButton(
-            child: Text('Cancel', style: TextStyle(color: Colors.black54)),
-            onPressed: () => Navigator.of(ctx).pop(),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFF45B62),
-              foregroundColor: Colors.white,
-            ),
-            child: Text('Add'),
+            child: Text("Add", style: TextStyle(color: pink, fontWeight: FontWeight.bold)),
             onPressed: () {
               if (newNote.trim().isNotEmpty) {
-                setState(() => userNotes.insert(0, newNote.trim()));
+                setState(() {
+                  userNotes.insert(0, newNote.trim());
+                });
               }
               Navigator.of(ctx).pop();
             },
-          ),
+          )
         ],
       ),
     );
   }
 
-  void _showNoteList() {
+  void _showNotes() {
     showModalBottomSheet(
       context: context,
       builder: (ctx) => Container(
-        padding: EdgeInsets.all(18),
+        padding: const EdgeInsets.all(18),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Your Notes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
+            const Text("Your Notes", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
             if (userNotes.isEmpty)
-              Text('No notes added yet.', style: TextStyle(color: Colors.black45)),
+              const Text("No notes added yet.", style: TextStyle(color: Colors.grey)),
             if (userNotes.isNotEmpty)
-              ...userNotes.map((note) => Padding(
-                padding: EdgeInsets.symmetric(vertical: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.note, color: Color(0xFFF45B62), size: 21),
-                    SizedBox(width: 8),
-                    Expanded(child: Text(note, style: TextStyle(fontSize: 16))),
-                  ],
+              ...userNotes.map(
+                (note) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.note, color: pink, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(note, style: const TextStyle(fontSize: 16))),
+                    ],
+                  ),
                 ),
-              )),
-            SizedBox(height: 12),
+              ),
+            const SizedBox(height: 10),
             ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showAddNoteDialog();
+              },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFF45B62),
-                foregroundColor: Colors.white,
+                backgroundColor: pink,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
               ),
-              onPressed: _showAddNoteDialog,
-              child: Text('Add a new note'),
-            ),
+              child: const Text("Add a new note"),
+            )
           ],
         ),
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final pink = const Color(0xFFF45B62);
-    final babyPink = const Color(0xFFFFE4EF);
-
-    final topRightIcons = Row(
-      mainAxisSize: MainAxisSize.min,
+  Widget _buildTopBar() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         GestureDetector(
-          onTap: _showNoteList,
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: pink,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2.1),
-              boxShadow: [
-                BoxShadow(color: pink.withOpacity(0.17), spreadRadius: 8, blurRadius: 20),
-              ],
-            ),
-            child: const Icon(Icons.add, size: 26, color: Colors.white),
+          onTap: () => Scaffold.of(context).openDrawer(),
+          child: Row(
+            children: [
+              const Icon(Icons.menu, size: 28, color: Colors.black87),
+              const SizedBox(width: 10),
+              Text(
+                userLocation ?? "lovelorn",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: pink,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 12),
-        GestureDetector(
-          onTap: _openEditProfile,
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: pink,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2.1),
-              boxShadow: [
-                BoxShadow(color: pink.withOpacity(0.17), spreadRadius: 8, blurRadius: 20),
-              ],
+        Row(
+          children: [
+            GestureDetector(
+              onTap: _showNotes,
+              child: Container(
+                width: 44,
+                height: 44,
+                margin: const EdgeInsets.only(right: 10),
+                decoration: BoxDecoration(
+                  color: pink,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [BoxShadow(color: pink.withOpacity(0.2), blurRadius: 10)],
+                ),
+                child: const Icon(Icons.add, color: Colors.white),
+              ),
             ),
-            child: const Icon(Icons.person, size: 26, color: Colors.white),
-          ),
-        ),
+            GestureDetector(
+              onTap: _openEditProfile,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: pink,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [BoxShadow(color: pink.withOpacity(0.2), blurRadius: 10)],
+                ),
+                child: const Icon(Icons.person, color: Colors.white),
+              ),
+            ),
+          ],
+        )
       ],
     );
+  }
 
-    final profileCircle = Stack(
+  Widget _buildProfileCircle() {
+    return Stack(
       alignment: Alignment.center,
       children: [
         Container(
-          width: 178,
-          height: 178,
+          width: 170,
+          height: 170,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: pink.withOpacity(0.12),
+            color: pink.withOpacity(0.15),
           ),
         ),
-        DottedBorder(
-          dashPattern: const [6, 5],
-          strokeWidth: 3,
-          color: pink,
-          borderType: BorderType.Circle,
-          padding: EdgeInsets.zero,
-          child: CircleAvatar(
-            radius: 87,
-            backgroundColor: Colors.white,
-            backgroundImage:
-            (uploadedImagePath != null) ? FileImage(File(uploadedImagePath!)) : null,
-            child: (uploadedImagePath == null)
-                ? Icon(Icons.person, size: 70, color: Colors.grey[400])
-                : null,
-          ),
+        CircleAvatar(
+          radius: 80,
+          backgroundColor: Colors.white,
+          backgroundImage: (uploadedImagePath != null && uploadedImagePath!.isNotEmpty)
+              ? (uploadedImagePath!.startsWith("http")
+                  ? NetworkImage(uploadedImagePath!)
+                  : FileImage(File(uploadedImagePath!))) as ImageProvider
+              : null,
+          child: (uploadedImagePath == null || uploadedImagePath!.isEmpty)
+              ? Icon(Icons.person, size: 80, color: Colors.grey[400])
+              : null,
         ),
         Positioned(
-          bottom: 15,
+          bottom: 20,
           child: CircleAvatar(
-            radius: 25,
+            radius: 20,
             backgroundColor: pink,
-            child: const Icon(Icons.favorite, color: Colors.white, size: 27),
+            child: const Icon(Icons.favorite, color: Colors.white),
           ),
-        ),
+        )
       ],
     );
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       drawer: Drawer(
         child: ListView(
@@ -236,254 +249,141 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             DrawerHeader(
               decoration: BoxDecoration(color: pink),
-              child: Text(
-                'Menu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: const Text(
+                "Menu",
+                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ),
             ListTile(
-              leading: Icon(Icons.settings, color: pink),
-              title: Text("Settings"),
-              onTap: () {
-                Navigator.pop(context);
-              },
+              leading: const Icon(Icons.settings),
+              title: const Text("Settings"),
+              onTap: () => Navigator.of(context).pop(),
             ),
             ListTile(
-              leading: Icon(Icons.person, color: pink),
-              title: Text("Profile"),
-              onTap: () {
-                Navigator.pop(context);
-              },
+              leading: const Icon(Icons.person),
+              title: const Text("Profile"),
+              onTap: () => Navigator.of(context).pop(),
             ),
             ListTile(
-              leading: Icon(Icons.info, color: pink),
-              title: Text("About"),
-              onTap: () {
-                Navigator.pop(context);
-              },
+              leading: const Icon(Icons.info),
+              title: const Text("About"),
+              onTap: () => Navigator.of(context).pop(),
             ),
             ListTile(
-              leading: Icon(Icons.logout, color: pink),
-              title: Text("Logout"),
-              onTap: () {
-                Navigator.pop(context);
-              },
+              leading: const Icon(Icons.logout),
+              title: const Text("Logout"),
+              onTap: () => Navigator.of(context).pop(),
             ),
           ],
         ),
       ),
       backgroundColor: babyPink,
       body: SafeArea(
-        child: Container(
-          color: babyPink,
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    GestureDetector(
-                      onTap: () => Scaffold.of(context).openDrawer(),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.menu, size: 28, color: Colors.black87),
-                          const SizedBox(width: 12),
-                          Text(
-                            "loveloom",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: pink,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    topRightIcons,
-                  ],
-                ),
-              ),
-              Column(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: _buildTopBar(),
+            ),
+            const SizedBox(height: 40),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const SizedBox(height: 90),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 23),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: RichText(
-                        text: TextSpan(
-                          text: "Hi, ",
-                          style: TextStyle(
-                            color: pink,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 26,
-                            fontFamily: 'Nunito',
-                          ),
-                          children: <TextSpan>[
-                            TextSpan(
-                              text: widget.userName ?? "User",
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 21,
-                                fontFamily: 'Nunito',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                  Text(
+                    "Hi, ",
+                    style: TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: pink),
+                  ),
+                  Flexible(
+                    child: Text(
+                      userName ?? "User",
+                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(height: 25),
-                  profileCircle,
-                  const SizedBox(height: 22),
-                  Column(
-                    children: [
-                      Text(
-                        "in this chaos let's find your",
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.black54,
-                          fontFamily: 'Nunito',
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      Text(
-                        "cosmos!",
-                        style: TextStyle(
-                          color: pink,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          fontStyle: FontStyle.italic,
-                          fontFamily: 'Nunito',
-                        ),
-                      ),
-                      SizedBox(height: 23),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: pink,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(33),
-                            ),
-                            elevation: 5,
-                            padding: const EdgeInsets.symmetric(vertical: 19),
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => OpenStreetMapSearchPage()),
-                            );
-                          },
-                          child: const Text(
-                            'Find your match',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 19,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: pink,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(33),
-                            ),
-                            elevation: 5,
-                            padding: const EdgeInsets.symmetric(vertical: 19),
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const ExplorePage()),
-                            );
-                          },
-                          child: const Text(
-                            'Explore',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 19,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
+                  )
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 40),
+            Center(child: _buildProfileCircle()),
+            const SizedBox(height: 30),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: Column(
+                children: [
+                  Text(
+                    "in this chaos\nlet's find your cosmos!",
+                    style: TextStyle(
+                        fontSize: 22, color: pink, fontWeight: FontWeight.w600, height: 1.3),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 40),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const FindTheMatchPage()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: pink,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))),
+                      child: const Text(
+                        "Find a match",
+                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ExplorePage()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: pink,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))),
+                      child: const Text(
+                        "Explore",
+                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
+            const Spacer(),
+          ],
         ),
       ),
-      bottomNavigationBar: Container(
-        height: 64,
-        decoration: BoxDecoration(
-          color: pink,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(36),
-            topRight: Radius.circular(36),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: pink.withOpacity(0.11),
-              blurRadius: 18,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                const Icon(Icons.home, size: 26, color: Colors.white),
-                const Icon(Icons.explore, size: 26, color: Colors.white),
-                const Icon(Icons.search, size: 30, color: Colors.white),
-                IconButton(
-                  icon: const Icon(Icons.chat_bubble_outline, size: 26, color: Colors.white),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const MessagePage()),
-                    );
-                  },
-                ),
-                const Icon(Icons.person, size: 26, color: Colors.white),
-              ],
-            ),
-            Positioned(
-              bottom: 10,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 64,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                  ),
-                ],
+      bottomNavigationBar: BottomAppBar(
+        color: pink,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              IconButton(onPressed: () {}, icon: const Icon(Icons.home, color: Colors.white)),
+              IconButton(onPressed: () {}, icon: const Icon(Icons.explore, color: Colors.white)),
+              IconButton(onPressed: () {}, icon: const Icon(Icons.search, color: Colors.white)),
+              IconButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const MessagePage()),
+                  );
+                },
+                icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
               ),
-            ),
-          ],
+              IconButton(onPressed: () {}, icon: const Icon(Icons.person, color: Colors.white)),
+            ],
+          ),
         ),
       ),
     );
