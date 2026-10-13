@@ -92,6 +92,9 @@ Once logged in, the user sees the dashboard with the following features:
 
 3. Setup backend and MongoDB
 Make sure MongoDB server is running continuously by executing:
+
+ @(Get-Content .env | Where-Object { $_ -notmatch '^\s*MONGO_URI=' }) + 'MONGO_URI=mongodb+srv://deepti1:deepti@cluster0.ntmb3vi.mongodb.net/loveloom?appName=Cluster0' | Set-Content .env -Encoding ascii
+>> node app.js
 ```
 mongod
 ```
