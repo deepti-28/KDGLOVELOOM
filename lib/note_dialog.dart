@@ -27,17 +27,24 @@ class _NoteDialogPageState extends State<NoteDialogPage> {
     _fetchNotes();
   }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   Future<void> _fetchNotes() async {
     setState(() => _isLoading = true);
     try {
       final notesData = await _apiService.getPlaceNotes(widget.placeId);
+      if (!mounted) return;
       setState(() {
         _notes = List<Map<String, dynamic>>.from(notesData);
       });
     } catch (e) {
-      // Handle error gracefully, optionally display a snackbar or similar
+      debugPrint('getPlaceNotes error: $e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -49,6 +56,7 @@ class _NoteDialogPageState extends State<NoteDialogPage> {
 
     try {
       final success = await _apiService.addPlaceNote(widget.placeId, noteText);
+      if (!mounted) return;
       if (success) {
         setState(() {
           _notes.insert(0, {
@@ -68,11 +76,13 @@ class _NoteDialogPageState extends State<NoteDialogPage> {
         );
       }
     } catch (e) {
+      debugPrint('addPlaceNote error: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error submitting note.')),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -80,6 +90,7 @@ class _NoteDialogPageState extends State<NoteDialogPage> {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
+      if (!mounted) return;
       setState(() => _attachment = File(pickedFile.path));
       // TODO: Implement attachment upload if needed
     }

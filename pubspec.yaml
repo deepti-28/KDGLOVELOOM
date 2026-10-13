@@ -14,15 +14,15 @@ dependencies:
   cupertino_icons: ^1.0.2
 
   # For OpenStreetMap maps
-  flutter_map: ^4.0.0
-  latlong2: ^0.8.1
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
   google_maps_flutter: ^2.2.5
 
   # For geocoding (forward/reverse)
   geocoding: ^2.0.5
 
   # For HTTP requests to your backend
-  http: ^0.13.5
+  http: ^1.2.2
 
   # For picking images from device
   image_picker: ^0.8.7+4

@@ -18,13 +18,12 @@ class _NotePageState extends State<NotePage> {
   @override
   void initState() {
     super.initState();
-    print("=== USER DEBUG OUTPUT ===");
-    print(users);
-    print("Total users: ${users.length}");
+    debugPrint("=== USER DEBUG OUTPUT ===");
+    debugPrint("Total users: ${users.length}");
     for (var u in users) {
-      print("User: ${u.name} at ${u.location}");
+      debugPrint("User: ${u.name} at ${u.location}");
     }
-    print("=========================");
+    debugPrint("=========================");
   }
 
   void _openChat(user) {
@@ -45,23 +44,24 @@ class _NotePageState extends State<NotePage> {
       appBar: AppBar(title: const Text('Vikaspuri Users')),
       body: FlutterMap(
         options: MapOptions(
-          center: initialCenter,
-          zoom: initialZoom,
+          initialCenter: initialCenter,
+          initialZoom: initialZoom,
         ),
         children: [
           TileLayer(
-            urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            subdomains: const ['a', 'b', 'c'],
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            // IMPORTANT: replace with your real, unique applicationId
+            // (see android/app/build.gradle). Do NOT use com.example.*
+            userAgentPackageName: 'com.yourname.loveloom',
           ),
           MarkerLayer(
             markers: users.map(
-              (user) {
-                print('Rendering marker for user: ${user.name}, ${user.location}');
+                  (user) {
                 return Marker(
                   width: 70,
                   height: 70,
                   point: user.location,
-                  builder: (_) => GestureDetector(
+                  child: GestureDetector(
                     onTap: () => _openChat(user),
                     child: Stack(
                       clipBehavior: Clip.none,
@@ -74,7 +74,7 @@ class _NotePageState extends State<NotePage> {
                               color: Colors.amber,
                               width: 5,
                             ),
-                            boxShadow: [
+                            boxShadow: const [
                               BoxShadow(
                                 color: Colors.black26,
                                 blurRadius: 7,
