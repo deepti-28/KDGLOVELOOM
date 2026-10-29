@@ -140,23 +140,7 @@ npm start
 - Use **Find a Match** to search nearby users on the map and initiate chats.
 - Explore cafes, interact by liking, commenting, and adding notes.
 6. Use the bottom navigation bar to switch between Home, Map, Chat requests, and Profile.
-
-  <img width="301" height="671" alt="image" src="https://github.com/user-attachments/assets/9da3a0d1-8394-475b-a0e9-790926d4cb83" />
-  <img width="317" height="676" alt="image" src="https://github.com/user-attachments/assets/d65b9bad-83df-4643-8e0b-e3b2be649a53" />
-  <img width="304" height="671" alt="image" src="https://github.com/user-attachments/assets/f924de4f-e20c-42ac-89ed-5d9ed506332b" />
-  <img width="299" height="665" alt="image" src="https://github.com/user-attachments/assets/2debbb58-cdf4-43d1-8281-952380d3752a" />
-  <img width="325" height="719" alt="image" src="https://github.com/user-attachments/assets/12910bf1-334e-403b-af0c-ea6a1ae0eab4" />
-  <img width="319" height="719" alt="image" src="https://github.com/user-attachments/assets/66c2558d-6781-40a1-b017-2c7cba6c10a9" />
-  <img width="313" height="716" alt="image" src="https://github.com/user-attachments/assets/e0c1dd28-fa95-4839-908d-5955f538f4db" />
-  <img width="306" height="671" alt="image" src="https://github.com/user-attachments/assets/a17f0306-0270-4393-8883-6669c8dff356" />
-  <img width="296" height="670" alt="image" src="https://github.com/user-attachments/assets/1e2f340a-8dac-4299-aeb9-7b7ddf396a13" />
-  <img width="318" height="719" alt="image" src="https://github.com/user-attachments/assets/3ed81659-0b8e-4c19-8778-bf1d49382faa" />
-
-
-
-
-
-
+  
 ## Future Improvements
 
 - Real-time chat features with instant messaging and notifications.
